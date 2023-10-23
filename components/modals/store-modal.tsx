@@ -1,8 +1,10 @@
 'use client';
 
+import { useState } from 'react';
 import * as z from 'zod';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
+import axios from 'axios';
 
 import { useStoreModal } from '@/hooks/use-store-modal';
 import { Modal } from '@/components/ui/modal';
@@ -16,6 +18,7 @@ import {
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
+import toast from 'react-hot-toast';
 
 const formSchema = z.object({
 	name: z.string().min(5, 'Store name must be at least 5 characters long.'),
@@ -23,6 +26,9 @@ const formSchema = z.object({
 
 export const StoreModal = () => {
 	const storeModal = useStoreModal();
+
+	const [loading, setLoading] = useState(false);
+
 	const form = useForm<z.infer<typeof formSchema>>({
 		resolver: zodResolver(formSchema),
 		defaultValues: {
@@ -31,8 +37,17 @@ export const StoreModal = () => {
 	});
 
 	const onSubmit = async (values: z.infer<typeof formSchema>) => {
-		console.log(values);
-		// TODO: Create Store
+		try {
+			setLoading(true);
+
+			const response = await axios.post('/api/stores', values);
+
+			toast.success('Created your new store 🚀');
+		} catch (error) {
+			toast.error('Oops there was problem creating your store 🙃');
+		} finally {
+			setLoading(false);
+		}
 	};
 
 	return (
@@ -54,6 +69,7 @@ export const StoreModal = () => {
 										<FormLabel>Name</FormLabel>
 										<FormControl>
 											<Input
+												disabled={loading}
 												placeholder='Enter store name (ex. Cosmic Commodities)'
 												{...field}
 											/>
@@ -63,8 +79,11 @@ export const StoreModal = () => {
 								)}
 							/>
 							<div className='pt-6 space-x-2 flex items-center justify-end w-full'>
-								<Button type='submit'>Continue</Button>
+								<Button disabled={loading} type='submit'>
+									Continue
+								</Button>
 								<Button
+									disabled={loading}
 									variant='outline'
 									onClick={storeModal.onClose}
 								>
